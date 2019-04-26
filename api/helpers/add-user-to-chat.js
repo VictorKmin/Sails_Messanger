@@ -5,13 +5,13 @@ module.exports = {
 
 
   description: `This helper build query using for INSERT VALUES statement. We get query like 
-                 INSERT INTO mess_user_to_chat(user_id, chat_id) VALUES
+                 INSERT INTO mess_l_room_user(user_id, room_id) VALUES
                  and have array of id's. Than we iterate this array and add to query`,
 
   inputs: {
-    chat_id: {
+    room_id: {
       type: 'number',
-      description: "Chat id for witch we add users",
+      description: "Room id for witch we add users",
       required: true
     },
     ids: {
@@ -32,9 +32,9 @@ module.exports = {
 
 
   fn: async function (inputs) {
-    let query = `INSERT INTO sch$1.mess_user_to_chat(user_id, chat_id) VALUES`;
+    let query = `INSERT INTO sch$1.mess_l_room_user(user_id, room_id) VALUES`;
     inputs.ids.forEach(id => {
-      query += `(${id}, ${inputs.chat_id}), `
+      query += `(${id}, ${inputs.room_id}), `
     });
 
     query = query.slice(0, -2) + `;`;

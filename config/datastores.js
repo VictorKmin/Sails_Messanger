@@ -16,9 +16,5 @@
 module.exports.datastores = {
 
 
-  default: {
-
-    adapter: 'sails-postgresql',
-    url: 'postgresql://myunisoft:r1nuC6nhWLRqsNVmnJkX@chewbacca.myunisoft.fr:5432/myunisoft_dev1',
-  },
+  default: {},
 };

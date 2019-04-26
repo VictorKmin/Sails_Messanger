@@ -13,11 +13,11 @@ const pgp = require("pg-promise")();
 
 module.exports.bootstrap = async function (done) {
   const cn = {
-    host: process.env.MYUNISOFT_DB_HOST,
-    port: process.env.MYUNISOFT_DB_PORT,
-    database: process.env.MYUNISOFT_DB_NAME,
-    user: process.env.MYUNISOFT_DB_USER,
-    password: process.env.MYUNISOFT_DB_PASSWORD
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD
   };
 
   try {

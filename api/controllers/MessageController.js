@@ -10,7 +10,8 @@ let jwt = require('jsonwebtoken');
 
 module.exports = {
   create: async (req, res) => {
-    console.log(req.body);
+    console.log(sails.controllers);
+
     res.ok('OK')
   },
 

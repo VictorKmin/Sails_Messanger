@@ -19,14 +19,21 @@ module.exports = {
    */
   create: async (req, res) => {
     try {
-      const {basic_id, title = ''} = req.body;
+      const {root, title = '', parent_id} = req.body;
       const token = req.token;
       const {pers_physique_id: user_id, member_group_id} = token;
-      if (!basic_id || !title.trim()) return res.badRequest('Some of params in body is missing');
+      if (!title.trim()) return res.badRequest('Title must be not empty');
 
-      const createNewFolder = `INSERT INTO sch$1.mess_chat_folder(title, basic_id, user_id) VALUES($2, $3, $4) RETURNING *`;
-      const insertedValue = await db.any(createNewFolder, [1, title, basic_id, user_id]);
-      res.ok(insertedValue)
+      const createNewFolder = `INSERT INTO sch$1.mess_folder(title, root, user_id) VALUES($2, $3, $4) RETURNING folder_id`;
+      const createFolderRelation = `INSERT INTO sch$1.mess_l_folder(parent_id, child_id) VALUES ($2, $3)`;
+      const insertedId = await db.any(createNewFolder, [1, title, !!root, user_id]);
+      // TODO get folders and subfolders
+      // const getAllFolders =
+
+      if (!!root && parent_id && insertedId) {
+        await db.none(createFolderRelation, [1, parent_id, insertedId])
+      }
+      res.ok('OK')
     } catch (e) {
       res.badRequest(e.message)
     }
@@ -53,9 +60,9 @@ module.exports = {
 
       if (!folder_id || !title.trim()) return res.badRequest('Some of params in body is missing');
 
-      const isFolderPresent = `SELECT * FROM sch$1.mess_chat_folder WHERE user_id = $2 AND id = $3`;
+      const isFolderPresent = `SELECT * FROM sch$1.mess_folder WHERE user_id = $2 AND id = $3`;
       const updateFolder =
-        `UPDATE sch$1.mess_chat_folder 
+        `UPDATE sch$1.mess_folder 
          SET title = $2, updated_at = now() 
               WHERE id = $3 AND user_id = $4
            RETURNING *`;
@@ -83,28 +90,30 @@ module.exports = {
    */
   delete: async (req, res) => {
     try {
-      const {folder_id} = req.query;
+      const {id} = req.params;
       const token = req.token;
       const {pers_physique_id: user_id, member_group_id} = token;
-      if (!folder_id) return res.badRequest('Folder ID is missing');
+      if (!id) return res.badRequest('Folder ID is missing');
 
-      const isFolderPresent = `SELECT * FROM sch$1.mess_chat_folder WHERE user_id = $2 AND id = $3`;
-      const deleteFolder = `DELETE FROM sch$1.mess_chat_folder WHERE id = $2 AND user_id = $3`;
-      const getAllFolders =
-        `SELECT f.*
-         FROM sch$1.mess_chat_folder f
-         WHERE f.id IN (SELECT folder_id
-                        FROM sch$1.mess_chat mc
-                                 JOIN sch$1.mess_user_to_chat utc on mc.id = utc.chat_id
-                        WHERE utc.user_id = $2)
-            OR f.user_id = $2`;
+      const isFolderPresent = `SELECT * FROM sch$1.mess_folder WHERE user_id = $2 AND id = $3`;
+      const deleteFolder = `DELETE FROM sch$1.mess_folder WHERE user_id = $2 AND id = $3`;
 
-      await db.one(isFolderPresent, [1, user_id, folder_id]);
-      await db.none(deleteFolder, [1, folder_id, user_id]);
+      // TODO get all folders and sub folders
+      // const getAllFolders =
+      //   `SELECT f.*
+      //    FROM sch$1.mess_chat_folder f
+      //    WHERE f.id IN (SELECT folder_id
+      //                   FROM sch$1.mess_chat mc
+      //                            JOIN sch$1.mess_user_to_chat utc on mc.id = utc.chat_id
+      //                   WHERE utc.user_id = $2)
+      //       OR f.user_id = $2`;
 
-      const allFolders = await db.any(getAllFolders, [1, user_id]);
+      await db.one(isFolderPresent, [1, user_id, id]);
+      await db.none(deleteFolder, [1, user_id, id]);
 
-      res.ok(allFolders)
+      // const allFolders = await db.any(getAllFolders, [1, user_id]);
+
+      res.ok("allFolders")
     } catch (e) {
       res.badRequest(e.message);
     }

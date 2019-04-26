@@ -90,13 +90,95 @@ module.exports = {
       console.log(e);
       res.badRequest(e.message);
     }
+  },
+
+  /**
+   * This method using when we want to add user,
+   * room or folder of rooms members to new chat.
+   * We find all by name and get count of users inside.
+   * @param req
+   * @param res
+   * @return {Promise<void>}
+   */
+
+  getUsersOrRoomsByName: async (req, res) => {
+    try {
+      let {w = ''} = req.query;
+      console.log(w);
+      w = `%${w}%`;
+      const token = req.token;
+      const {pers_physique_id: user_id, member_group_id} = token;
+
+      const findUsers =
+        `SELECT nom, prenom, id_pers_physique
+         FROM sch$1.pers_physique
+         WHERE nom ILIKE $2'
+            OR prenom LIKE $2;`;
+
+      const findRooms =
+        `SELECT count(r2u.l_room_user_id) AS member_count, r.*
+         FROM sch$1.mess_room r
+                  JOIN sch$1.mess_l_room_user r2u on r.room_id = r2u.room_id
+         WHERE title ILIKE $2
+           AND r2u.user_id = $3
+           AND r.is_archived = FALSE
+         GROUP BY r.room_id;`;
+
+      const findFolders =
+        `SELECT DISTINCT f.title                   AS folder_title,
+                         r.title                   AS room_title,
+                         r.room_id,
+                         count(r2u.l_room_user_id) AS members_count
+         FROM sch$1.mess_room r
+                  LEFT JOIN sch$1.mess_l_folder f2f ON f2f.child_id = r.folder_id
+                  JOIN sch$1.mess_l_room_user r2u on r.room_id = r2u.room_id
+                  LEFT JOIN sch$1.mess_folder f on f2f.child_id = f.folder_id
+         WHERE r.folder_id IN (SELECT folder_id FROM sch$1.mess_folder WHERE title LIKE $2)
+            OR f2f.parent_id IN (SELECT folder_id FROM sch$1.mess_folder WHERE title LIKE $2)
+             AND r2u.user_id = $3
+         GROUP BY f.title, r.title, r.room_id;`;
+
+      const users = await db.any(findUsers, [1, w]);
+      const rooms = await db.any(findRooms, [1, w, user_id]);
+      const folders = await db.any(findFolders, [1, w, user_id]);
+
+      res.ok({users, rooms, folders})
+    } catch (e) {
+      res.badRequest(e.message);
+    }
+  },
+
+
+  /**
+   * This method using when we want to add new users to room
+   * In query require param is id -> id of room where we need to add user
+   * In query param w we can send ford to find user by name or surname
+   * If this param is empty database return all available users
+   * @param req
+   * @param res
+   * @return {Promise<void>}
+   */
+  getAvailableUserByRoom: async (req, res) => {
+    try {
+      const {id} = req.params;
+      let {w = ''} = req.query;
+      w = `%${w}%`;
+      if (!id) return req.badRequest('Select room id first');
+
+      const getAvaliableUsers =
+        `SELECT DISTINCT pp.prenom, pp.nom, pp.id_pers_physique
+         FROM sch$1.pers_physique pp
+         WHERE pp.id_pers_physique NOT IN (SELECT user_id FROM sch$1.mess_l_room_user WHERE room_id = $2)
+             AND pp.nom ILIKE $3'
+            OR pp.prenom ILIKE $3;`;
+
+      const users = db.any(getAvaliableUsers, [1, id, w]);
+
+      res.ok(users);
+    } catch (e) {
+      res.badRequest(e.message);
+    }
   }
-
-  //////////////////////////////////////////////////
-
-  // TODO дістати юзерів по імені або фамілії для додавання в діалог
-
-  // TODO
 
 
 };

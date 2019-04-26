@@ -20,23 +20,30 @@ module.exports.routes = {
    ***************************************************************************/
 
   '/': {view: 'pages/homepage'},
-  'POST /message': 'MessageController.create',
-
-
-  'GET /messageInfo': 'InfoController.getInfoOnLogin',
 
   // TOKEN. WILL BE DELETE
   'GET /t': 'MessageController.gener',
 
+
+  // INFORMATION ROUTER
+  'GET /info/messageInfo': 'InfoController.getInfoOnLogin',
+  'GET /info/getUsersAndRooms': 'InfoController.getUsersOrRoomsByName',
+  'GET /info/getUsers/:id': 'InfoController.getAvailableUserByRoom',
+
   // FOLDER ROUTES
   'POST /folder': 'FolderController.create',
   'PUT /folder': 'FolderController.edit',
-  'DELETE /folder': 'FolderController.delete',
+  'DELETE /folder/:id': 'FolderController.delete',
 
-  // CHAT ROUTER
-  'POST /chat': 'ChatController.create',
-  'PUT /chat': 'ChatController.edit',
-  'DELETE /chat': 'ChatController.delete'
+  // ROOM ROUTER
+  'POST /room': 'RoomController.create',
+  'PUT /room': 'RoomController.edit',
+  'DELETE /room/:id': 'RoomController.delete',
+  'GET /room/:id': 'RoomController.getRoomInfo',
+
+  // MESSAGE ROUTER
+  'POST /message': 'MessageController.create',
+
 
   /***************************************************************************
    *                                                                          *
